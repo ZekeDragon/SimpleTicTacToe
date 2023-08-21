@@ -4,6 +4,24 @@
 #include <string>
 #include <numeric>
 
+constexpr char DIGIT_DIFF = '0';
+constexpr char ALPHA_DIFF = ('a' - 10);
+
+constexpr int convert(char input)
+{
+    return std::isdigit(input) ? input - DIGIT_DIFF : input - ALPHA_DIFF;
+}
+
+constexpr char convert(int input)
+{
+    return static_cast<char>(input < 10 ? input + DIGIT_DIFF : input + ALPHA_DIFF);
+}
+
+constexpr char playerNum(char player)
+{
+    return player == 'x' ? '1' : '2';
+}
+
 class TicTacToeBoard
 {
 public:
@@ -33,7 +51,8 @@ public:
     {
         if (input > 0 && input <= AREA)
         {
-            if (std::isdigit(board[--input]))
+            char test = convert(input);
+            if (board[--input] == test)
             {
                 board[input] = player;
                 checkWinner(player);
@@ -47,14 +66,22 @@ public:
     std::string displayBoard()
     {
         std::string retStr;
+        constexpr size_t EXTENT = WIDTH - 1;
 
         for (size_t pos = 0; pos < AREA; ++pos)
         {
             retStr += board[pos];
-            retStr += (pos % WIDTH) < 2 ? '|' : '\n';
-            if (pos % WIDTH == 2 && pos / HEIGHT < 2)
+            retStr += pos % WIDTH < EXTENT ? '|' : '\n';
+            if (pos % WIDTH == EXTENT && pos / HEIGHT < EXTENT)
             {
-                retStr += "-----\n";
+                retStr += '-';
+
+                for (size_t counter = 0; counter < EXTENT; ++counter)
+                {
+                    retStr += "--";
+                }
+
+                retStr += '\n';
             }
         }
 
@@ -62,15 +89,45 @@ public:
     }
 
 private:
+    static_assert(WIDTH >= 3 && WIDTH <= 5, "This Tic-Tac-Toe Game only supports compilation with widths of 3, 4, or 5");
     // I use digits instead of '!' for filler locations to make it clear and easy for players to know which number
     // positions correlate with a player's possible choices.
-    std::array<char, AREA> board = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    template <int NUM>
+    constexpr static std::array<char, NUM> BOARD_INIT = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    template <>
+    constexpr static std::array<char, 16> BOARD_INIT<16> = {'1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g'};
+    template <>
+    constexpr static std::array<char, 25> BOARD_INIT<25> = {'1', '2', '3', '4' ,'5', '6', '7', '8', '9', 'a',
+                                                            'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
+                                                            'l', 'm', 'n', 'p', 'q'};
+
+    std::array<char, AREA> board = BOARD_INIT<AREA>;
     bool winner = false;
 
-    constexpr static std::array<std::array<int, WIDTH>, 8> winningOpts{{
+    template <int NUM> constexpr static size_t WIN_NUM = 8;
+    template <> constexpr static size_t WIN_NUM<16> = 10;
+    template <> constexpr static size_t WIN_NUM<25> = 12;
+
+    template <int NUM>
+    constexpr static std::array<std::array<int, 3>, WIN_NUM<NUM>> WIN_OPTS{{
         {{ 0, 1, 2 }}, {{ 3, 4, 5 }}, {{ 6, 7, 8 }}, {{ 0, 3, 6 }},
         {{ 1, 4, 7 }}, {{ 2, 5, 8 }}, {{ 0, 4, 8 }}, {{ 2, 4, 6 }}
     }};
+
+    template <>
+    constexpr static std::array<std::array<int, 4>, WIN_NUM<16>> WIN_OPTS<16>{{
+        {{ 0, 1, 2, 3 }}, {{ 4, 5, 6, 7 }}, {{ 8, 9, 10, 11 }}, {{ 12, 13, 14, 15 }}, {{ 0, 4, 8, 12 }},
+        {{ 1, 5, 9, 13 }}, {{ 2, 6, 10, 14 }}, {{ 3, 7, 11, 15 }}, {{ 0, 5, 10, 15 }}, {{ 3, 6, 9, 12 }}
+    }};
+
+    template <>
+    constexpr static std::array<std::array<int, 5>, WIN_NUM<25>> WIN_OPTS<25>{{
+        {{ 0, 1, 2, 3, 4}}, {{ 5, 6, 7, 8, 9 }}, {{ 10, 11, 12, 13, 14 }}, {{ 15, 16, 17, 18, 19 }}, {{ 20, 21, 22, 23, 24 }},
+        {{ 0, 5, 10, 15, 20 }}, {{ 1, 6, 11, 16, 21 }}, {{ 2, 7, 12, 17, 22 }}, {{ 3, 8, 13, 18, 23 }}, {{ 4, 9, 14, 19, 24 }},
+        {{ 0, 6, 12, 18, 24 }}, {{ 4, 8, 12, 16, 20 }}
+    }};
+
+    constexpr static std::array<std::array<int, WIDTH>, WIN_NUM<AREA>> winningOpts = WIN_OPTS<AREA>;
 
     void checkWinner(char player)
     {
@@ -96,14 +153,9 @@ private:
     }
 };
 
-constexpr char playerNum(char player)
+char getInput(char player)
 {
-    return player == 'x' ? '1' : '2';
-}
-
-int getInput(char player)
-{
-    int input;
+    char input;
     std::cout << "Player " << playerNum(player) << " move: ";
 
     // The right thing to do here would be to sanitize user input, as the user could put in something that is not an
@@ -117,16 +169,16 @@ int getInput(char player)
 int main()
 {
     TicTacToeBoard ttt;
-    char player = 'q';
+    char player = 'z';
 
     std::cout << "== TIC TAC TOE ==\n" << ttt.displayBoard();
 
     while (!ttt.gameOver())
     {
         player = player == 'x' ? 'o' : 'x';
-        int input = getInput(player);
+        char input = getInput(player);
 
-        while (!ttt.placeInputOnBoard(input, player))
+        while (!ttt.placeInputOnBoard(convert(input), player))
         {
             std::cout << "Invalid input: " << input << "\n";
             input = getInput(player);

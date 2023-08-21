@@ -7,9 +7,9 @@
 class TicTacToeBoard
 {
 public:
-	constexpr static size_t WIDTH = 3;
-	constexpr static size_t HEIGHT = WIDTH;
-	constexpr static size_t AREA = WIDTH * HEIGHT;
+    constexpr static size_t WIDTH = 3;
+    constexpr static size_t HEIGHT = WIDTH;
+    constexpr static size_t AREA = WIDTH * HEIGHT;
 
     bool catsGame()
     {

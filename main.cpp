@@ -9,11 +9,13 @@ constexpr char ALPHA_DIFF = ('a' - 10);
 
 constexpr int convert(char input)
 {
+    if (input > 'o') --input;
     return std::isdigit(input) ? input - DIGIT_DIFF : input - ALPHA_DIFF;
 }
 
 constexpr char convert(int input)
 {
+    if (input > 23) ++input;
     return static_cast<char>(input < 10 ? input + DIGIT_DIFF : input + ALPHA_DIFF);
 }
 
@@ -25,21 +27,16 @@ constexpr char playerNum(char player)
 class TicTacToeBoard
 {
 public:
-    constexpr static size_t WIDTH = 3;
+    constexpr static size_t WIDTH = 5;
     constexpr static size_t HEIGHT = WIDTH;
     constexpr static size_t AREA = WIDTH * HEIGHT;
 
-    bool catsGame()
-    {
-        return !hasWinner() && std::none_of(board.begin(), board.end(), [](char c)
-                                            {
-                                                return std::isdigit(c);
-                                            });
-    }
-
     bool gameOver()
     {
-        return hasWinner() || catsGame();
+        return hasWinner() || std::all_of(board.begin(), board.end(), [](char c)
+                                          {
+                                              return c == 'x' || c == 'o';
+                                          });
     }
 
     bool hasWinner()
@@ -49,7 +46,7 @@ public:
 
     bool placeInputOnBoard(int input, char player)
     {
-        if (input > 0 && input <= AREA)
+        if (isValidLocation(input))
         {
             char test = convert(input);
             if (board[--input] == test)
@@ -128,6 +125,11 @@ private:
     }};
 
     constexpr static std::array<std::array<int, WIDTH>, WIN_NUM<AREA>> winningOpts = WIN_OPTS<AREA>;
+
+    constexpr bool isValidLocation(int loc)
+    {
+        return loc > 0 && loc <= AREA;
+    }
 
     void checkWinner(char player)
     {

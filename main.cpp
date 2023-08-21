@@ -4,14 +4,70 @@
 #include <string>
 #include <numeric>
 
-class TicTacToe
+class TicTacToeBoard
 {
+public:
+	constexpr static size_t WIDTH = 3;
+	constexpr static size_t HEIGHT = WIDTH;
+	constexpr static size_t AREA = WIDTH * HEIGHT;
+
+    bool catsGame()
+    {
+        return !hasWinner() && std::none_of(board.begin(), board.end(), [](char c)
+                                            {
+                                                return std::isdigit(c);
+                                            });
+    }
+
+    bool gameOver()
+    {
+        return hasWinner() || catsGame();
+    }
+
+    bool hasWinner()
+    {
+        return winner;
+    }
+
+    bool placeInputOnBoard(int input, char player)
+    {
+        if (input > 0 && input <= AREA)
+        {
+            if (std::isdigit(board[--input]))
+            {
+                board[input] = player;
+                checkWinner(player);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    std::string displayBoard()
+    {
+        std::string retStr;
+
+        for (size_t pos = 0; pos < AREA; ++pos)
+        {
+            retStr += board[pos];
+            retStr += (pos % WIDTH) < 2 ? '|' : '\n';
+            if (pos % WIDTH == 2 && pos / HEIGHT < 2)
+            {
+                retStr += "-----\n";
+            }
+        }
+
+        return retStr;
+    }
+
+private:
     // I use digits instead of '!' for filler locations to make it clear and easy for players to know which number
     // positions correlate with a player's possible choices.
-    std::array<char, 9> board = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    std::array<char, AREA> board = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
     bool winner = false;
 
-    constexpr static std::array<std::array<int, 3>, 8> winningOpts {{
+    constexpr static std::array<std::array<int, WIDTH>, 8> winningOpts{{
         {{ 0, 1, 2 }}, {{ 3, 4, 5 }}, {{ 6, 7, 8 }}, {{ 0, 3, 6 }},
         {{ 1, 4, 7 }}, {{ 2, 5, 8 }}, {{ 0, 4, 8 }}, {{ 2, 4, 6 }}
     }};
@@ -38,57 +94,6 @@ class TicTacToe
             }
         }
     }
-
-public:
-    bool catsGame()
-    {
-        return !hasWinner() && std::none_of(board.begin(), board.end(), [](char c)
-                                            {
-                                                return std::isdigit(c);
-                                            });
-    }
-
-    bool gameOver()
-    {
-        return hasWinner() || catsGame();
-    }
-
-    bool hasWinner()
-    {
-        return winner;
-    }
-
-    bool placeInputOnBoard(int input, char player)
-    {
-        if (input > 0 && input < 10)
-        {
-            if (std::isdigit(board[--input]))
-            {
-                board[input] = player;
-                checkWinner(player);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    std::string displayBoard()
-    {
-        std::string retStr;
-
-        for (size_t pos = 0; pos < board.size(); ++pos)
-        {
-            retStr += board[pos];
-            retStr += (pos % 3) < 2 ? '|' : '\n';
-            if (pos % 3 == 2 && pos / 3 < 2)
-            {
-                retStr += "-----\n";
-            }
-        }
-
-        return retStr;
-    }
 };
 
 constexpr char playerNum(char player)
@@ -111,7 +116,7 @@ int getInput(char player)
 
 int main()
 {
-    TicTacToe ttt;
+    TicTacToeBoard ttt;
     char player = 'q';
 
     std::cout << "== TIC TAC TOE ==\n" << ttt.displayBoard();
